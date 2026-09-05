@@ -1,46 +1,63 @@
-Lab: Detection Engineering & Triage - Process Execution & Discovery
+# Process Execution & Discovery — Detection and Triage Lab
 
-    Objective: Simulate host-based reconnaissance activity, deploy a custom detection rule in Elastic SIEM, analyze telemetry, and execute an end-to-end alert triage workflow.
+## Objective
 
-    Environment: Elastic Security (Elastic Agent / Elastic Defend), Windows Endpoint.
+Simulate Windows host-discovery activity, create a custom detection rule in Elastic Security, review the generated alerts, and document the triage decision.
 
-1. Threat Simulation
+## Environment
 
-To generate realistic telemetry for administrative discovery behavior, the following command was executed on the endpoint:
-DOS
+- Elastic Security / Elastic SIEM
+- Elastic Agent / Elastic Defend
+- Windows endpoint
 
+## 1. Activity Simulation
+
+The following command sequence was executed in the lab to generate process telemetry:
+
+```cmd
 cmd.exe /c "systeminfo & net localgroup administrators"
+```
 
-    Rationale: This command sequence gathers detailed OS configuration data via systeminfo and queries local group memberships via net, a common discovery pattern used during early-stage reconnaissance or internal enumeration.
+The commands collect operating-system information and local administrator group membership. This type of discovery activity can be legitimate administrative work, but it can also appear during reconnaissance, so context is important during triage.
 
-2. Detection Engineering
+## 2. Detection Rule
 
-A custom Process Execution Detection rule was built and deployed within Elastic SIEM to capture suspicious command-line execution patterns targeting host discovery and administrative group enumeration.
+A custom process-execution rule was created to identify command lines associated with host discovery and administrative group enumeration.
 
-    Rule Logic: Monitors process creation events (event.category: process and event.action: started) where command-line arguments match administrative discovery binaries and parameters.
+The rule uses process creation telemetry and command-line fields to identify matching activity.
 
-    Initial Outcome: Successfully generated 14 alerts under a Low severity threshold upon simulation execution.
+**Lab result:** 14 low-severity alerts were generated during the simulation.
 
-3. Alert Triage & Incident Response
+## 3. Alert Triage
 
-The generated alerts were investigated via the Elastic Security timeline and alert dashboard views to differentiate between malicious activity and authorized administrative tasks.
+The alerts were reviewed in the Elastic Security timeline and alert views.
 
-    Investigation Findings:
+### Investigation checks
 
-        The parent-child process lineage and execution context confirmed the commands were run interactively by an authorized administrator.
+- Reviewed process and parent-process context.
+- Confirmed the activity was associated with an authorized administrator in the lab.
+- Checked for related persistence, credential-access, or lateral-movement indicators.
+- Reviewed whether additional suspicious activity was present around the same execution time.
 
-        No persistence mechanisms, credential dumping utilities, or lateral movement artifacts were observed in connection with the process execution.
+### Disposition
 
-    Triage Action Taken:
+The available lab evidence supported closing the alerts as **false positives / authorized administrative activity**.
 
-        Updated alert status to Closed.
+The resolution was documented with the reason for closure rather than treating the detection match alone as proof of malicious activity.
 
-        Classified outcome as False Positive due to authorized administrative user context.
+## 4. Analyst Takeaways
 
-        Documented resolution rationale to complete the incident lifecycle.
+This lab demonstrates a basic SOC workflow: generate telemetry, create detection logic, validate the alert, investigate surrounding context, and document the final disposition.
 
-4. Evidence & Artifacts
+It also highlights an important triage consideration: discovery commands should be evaluated in context because the same behavior can be normal for an administrator or suspicious when combined with other indicators.
 
-    Active Alerts Dashboard: Showing rule triggers and low severity events.
+## Evidence
 
-    Alert Flyout Details: Triage status updated to Closed / False Positive.
+- Elastic alert results
+- Alert details and triage status
+- Process execution telemetry
+- Investigation notes
+
+## Portfolio Note
+
+This is a simulated lab exercise. The commands and alerts were generated for portfolio purposes and do not represent investigation of a real production environment.
