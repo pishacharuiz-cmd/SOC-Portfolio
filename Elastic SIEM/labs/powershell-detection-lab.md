@@ -1,47 +1,50 @@
-# Lab Report: Detecting PowerShell Reconnaissance with Elastic SIEM
+# PowerShell Reconnaissance Detection Lab
 
 ## Overview
-This lab focuses on detection engineering and log analysis within Elastic Security. The objective was to simulate and detect local reconnaissance activity—specifically, host discovery via PowerShell execution (`Get-ComputerInfo`)—using both Kusto Query Language (KQL) and ES|QL.
 
----
+This lab uses Elastic Security to detect simulated Windows host-discovery activity generated through PowerShell. The focus is on validating endpoint telemetry, writing practical SIEM queries, and reviewing the resulting events.
 
-## Lab Objectives
-* Simulate a common host discovery technique using PowerShell (`Get-ComputerInfo`).
-* Verify process creation and command-line logging via Elastic Agent telemetry.
-* Develop and execute detection queries in both **KQL** and **ES|QL** to filter security logs.
+## Objectives
 
----
+- Generate a known PowerShell discovery event in a lab environment.
+- Verify process creation and command-line telemetry.
+- Review PowerShell Script Block Logging (Event ID 4104).
+- Write equivalent KQL and ES|QL queries.
+- Validate that the expected event data is searchable in Elastic.
 
-## Detection Engineering & Queries
+## Detection Queries
 
-### 1. KQL Process Creation Query
-To identify instances where `powershell.exe` was invoked with arguments related to system discovery:
+### KQL — Process Creation
 
 ```kql
 process.name : "powershell.exe" and process.command_line : "*Get-ComputerInfo*"
-2. KQL Script Block Logging Query (Event ID 4104)
+```
 
-To capture script block content containing the discovery command:
-Code snippet
+### KQL — Script Block Logging
 
+```kql
 event.code : "4104" and powershell.file.script_text : "*Get-ComputerInfo*"
+```
 
-3. ES|QL Detection Query
+### ES|QL
 
-For environments utilizing ES|QL for advanced tabular data processing and threat hunting:
-Code snippet
+```esql
+FROM logs-*
+| WHERE process.name == "powershell.exe" AND process.command_line LIKE "*Get-ComputerInfo*"
+```
 
-from logs-* 
-| where process.name == "powershell.exe" and process.command_line like "*Get-ComputerInfo*"
+## Investigation & Validation
 
-Investigation Steps & Validation
+1. **Generate telemetry:** Execute the discovery command in the monitored lab endpoint.
+2. **Review event data:** Confirm the process name, command line, and available PowerShell logging fields.
+3. **Run the queries:** Test the detection logic in Elastic Discover.
+4. **Validate results:** Confirm that the returned event matches the expected activity.
+5. **Review query behavior:** Compare KQL and ES|QL syntax and refine the search when needed.
 
-    Step 1 — Telemetry Generation: Executed a monitored PowerShell process invocation forcing command-line parameter logging (Get-ComputerInfo).
+## Analyst Takeaway
 
-    Step 2 — Index / Query Tuning: Verified that the query language setting in Discover matched the syntax being used (switching correctly between KQL and ES|QL modes).
+The exercise shows why endpoint logging needs to be configured before a detection can be useful. A rule may be logically correct but still produce no results if the required process or PowerShell telemetry is not being collected.
 
-    Step 3 — Result Validation: Confirmed event capture via Elastic Agent and successfully isolated the process execution parameters in the SIEM dashboard.
+## Portfolio Note
 
-Conclusion
-
-This lab demonstrates the necessity of proper endpoint telemetry configuration (such as process creation auditing and command-line logging) and highlights the syntax differences when querying security logs across KQL and ES|QL engines.
+This activity was performed in a lab environment using simulated discovery behavior. It is intended to demonstrate SIEM query development and investigation workflow, not production incident response.
